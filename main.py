@@ -28,3 +28,6 @@ async def read_root(d:str):  # Accept 'd' as a function parameter
     model="gemini-1.5-flash",
     contents=d,)
     return {"message": response.text}  # Return response text properly
+@app.get("/")
+async def read_root():
+    return {"message": "Hello World"}
