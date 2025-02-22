@@ -30,4 +30,4 @@ async def read_root(d:str):  # Accept 'd' as a function parameter
     return {"message": response.text}  # Return response text properly
 @app.get("/")
 async def read_root():
-    return {"message": "Hello World"}
+    return {"message": "Hi"}
