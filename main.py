@@ -59,4 +59,4 @@ async def generate_content(d: str):
 # Default route to check API status
 @app.get("/")
 async def read_root():
-    return {"message": "Hi"}
+    return {"message": "Hi deep"}
