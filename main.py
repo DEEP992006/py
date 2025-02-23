@@ -1,13 +1,19 @@
-from fastapi import FastAPI, Depends, HTTPException, Header
-from google import genai
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
-from bson import ObjectId
+from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
+from bson import ObjectId
+from google import genai
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Initialize FastAPI app
 app = FastAPI()
-# Enable CORS
+
+# Enable CORS for all origins, methods, and headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,19 +21,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load environment variables from .env file
-
-load_dotenv()
-
-# Initialize the Gemini AI client
+# Initialize Google GenAI Client
 client = genai.Client(api_key=os.getenv("MY_API_KEY"))
 
-@app.get("/{d}")  # Corrected route parameter
-async def read_root(d:str):  # Accept 'd' as a function parameter
+# MongoDB Connection
+MONGO_URI = os.getenv("MONGO_URI")
+mongo_client = AsyncIOMotorClient(MONGO_URI)
+db = mongo_client["mydatabase"]  # Replace with your database name
+users_collection = db["users"]  # Users collection
+
+# Pydantic model for user registration
+class RegisterUser(BaseModel):
+    email: str
+
+# Route to store email in MongoDB (Accepts JSON input)
+@app.post("/register")
+async def register_user(user: RegisterUser):
+    # Check if email already exists
+    existing_user = await users_collection.find_one({"email": user.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Insert new user into the database
+    user_doc = {"email": user.email}
+    result = await users_collection.insert_one(user_doc)
+    
+    return {"message": "User registered successfully", "id": str(result.inserted_id)}
+
+# Route to generate content using Google GenAI
+@app.get("/{d}")
+async def generate_content(d: str):
     response = client.models.generate_content(
-    model="gemini-1.5-flash",
-    contents=d,)
+        model="gemini-1.5-flash",
+        contents=d,
+    )
     return {"message": response.text}  # Return response text properly
+
+# Default route to check API status
 @app.get("/")
 async def read_root():
     return {"message": "Hi"}
