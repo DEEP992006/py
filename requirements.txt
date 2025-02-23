@@ -6,4 +6,3 @@ pydantic
 motor
 python-dotenv
 fastapi[all]
-bson
