@@ -4,16 +4,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
-from bson import ObjectId
 from google import genai
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Enable CORS for all origins, methods, and headers
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,7 +33,7 @@ users_collection = db["users"]  # Users collection
 class RegisterUser(BaseModel):
     email: str
 
-# Route to store email in MongoDB (Accepts JSON input)
+# Route to store email in MongoDB (without bson)
 @app.post("/register")
 async def register_user(user: RegisterUser):
     # Check if email already exists
@@ -42,7 +41,7 @@ async def register_user(user: RegisterUser):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Insert new user into the database
+    # Insert new user
     user_doc = {"email": user.email}
     result = await users_collection.insert_one(user_doc)
     
